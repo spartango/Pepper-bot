@@ -1,0 +1,35 @@
+Pepper
+-------
+
+@ Anand Gupta, 2012
+
+A Google Talk Robot attached to posterous   
+
+Install 
+-------
+
+Pepper uses bundler to get her deps. 
+Use 'bundle install' to set things up.
+
+You'll need to provide Gtalk credentials for Pepper:
+
+Fill in: 
+botUsername = ''
+botPassword = ''
+
+Pepper also needs your Posterous API key before you can use her.
+Check out https://posterous.com/api
+
+posterousKey    = ''
+
+in bot/mcore.rb
+
+You can customise Pepper's behavior in pepper.rb
+
+Run
+---
+
+Just execute run.sh
+
+If you peek inside run.sh, you'll see that all it does is bundle exec, making
+Pepper something perfectly suitable for use on Heroku. 
