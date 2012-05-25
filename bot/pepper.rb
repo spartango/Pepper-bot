@@ -20,11 +20,15 @@ module Bot
 
         # Posterous interface
         def postToPosterous(postTitle, postBody)
-            @gmail.deliver do
-                to @posterousAddress
+            @log.debug "[Pepper]: Building message for post: "+postTitle
+            posterousAddress = @posterousAddress
+            message = @gmail.compose do
+                to posterousAddress
                 subject postTitle
                 body postBody
             end
+            message.deliver!
+            @log.debug "[Pepper]: Sent message!"
         end
 
         # Handlers
@@ -43,7 +47,7 @@ module Bot
                 end
                 buffer.push word
             end
-            return buffer.reverse.join(' ')
+            return buffer.join(' ')
         end
 
         # Parsers
