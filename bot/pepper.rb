@@ -9,6 +9,8 @@ module Bot
             @gmail = Gmail.connect(username, password)
             @posterousAddress = posterousAddress
 
+            @recordings = {} # Keeps track of conversations being recorded
+
             @log       = Logger.new(STDOUT)
             @log.level = Logger::DEBUG
         end
@@ -36,6 +38,19 @@ module Bot
             postToPosterous(postTitle, postBody)
             return [(buildMessage requester, "I've put the post up on Posterous")]
         end
+
+        def handleRecordingFinished
+            return [(buildMessage "I've started recording the conversation")]
+        end
+
+        def handleRecordingStop
+            return [(buildMessage "I've stopped recording the conversation. I won't post it.")]
+        end
+
+        def handleNewRecording
+            return [(buildMessage "I've posted the conversation.")]
+        end
+
 
         # Parsing Utils
         def popAndBuild(stopWord, stack)
@@ -91,7 +106,7 @@ module Bot
         def onQuery(message)
             # Pepper Queries
             senderName = message.from.node.to_s
-
+            senderId = message.from.stripped
             queryText = message.body
             
             # Create a new post all at once
@@ -104,19 +119,27 @@ module Bot
                 return handleNewPost message.from.stripped, postParams[:title], postParams[:body] if postParams
 
                 return [(buildMessage message.from.stripped, "Sorry, I couldn't post that.")] # onError
- 
+
+            elsif queryText.match /finish/i
+                return handleRecordingFinished senderId
+
+            elsif queryText.match /stop/i
+                return handleRecordingStop senderId
+
+            elsif queryText.match /record/i
+                return handleNewRecording senderId
+
             elsif queryText.match /help/i
-                sender = message.from.stripped
-                return [(buildMessage message.from.stripped, "I'm not ready to help you...")] # onError
+                return [(buildMessage senderId, "I'm not ready to help you...")] # onError
 
             elsif queryText.match /thank/i
-                return [(buildMessage message.from.stripped, "No problem!")]
+                return [(buildMessage senderId, "No problem!")]
             
             elsif queryText.match /hi/i or queryText.match /hello/i or queryText.match /hey/i
-                return [(buildMessage message.from.stripped, "Hello.")]
+                return [(buildMessage senderId, "Hello.")]
             end  
             # Default / Give up
-            return [(buildMessage message.from.stripped, "Sorry? Is there a way I can help?")]
+            return [(buildMessage senderId, "Sorry? Is there a way I can help?")]
         end
 
         def onMessage(message, &onProgress)
