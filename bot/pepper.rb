@@ -41,7 +41,7 @@ module Bot
 
         def handleRecordingFinished(requester)
             key = requester.to_s
-            if not @recordings.has_key key
+            if not @recordings.has_key? key
                 return [(buildMessage requester, "I wasn't recording this conversation, sorry!")]
             end
 
@@ -54,8 +54,8 @@ module Bot
             @recordings.delete key
 
             # Coalesce them 
-            postBody = messages.join('\n')
-            postTitle = "Conversation "+Time.now.strftime("%-m/%-d/%Y at %H:%M")
+            postBody = messages.join("\n")
+            postTitle = "Conversation on "+Time.now.strftime("%-m/%-d/%Y at %H:%M")
 
             # Make a new post
             return handleNewPost requester, postTitle, postBody
@@ -155,12 +155,12 @@ module Bot
 
                 return [(buildMessage message.from.stripped, "Sorry, I couldn't post that.")] # onError
 
-            elsif queryText.match /finish/i
+            elsif queryText.match /finish/i or queryText.match /stop/i
                 yield (buildMessage message.from.stripped, "Finished recording, getting your post ready...")
 
                 return handleRecordingFinished senderId
 
-            elsif queryText.match /stop/i
+            elsif queryText.match /cancel/i
                 return handleRecordingStop senderId
 
             elsif queryText.match /record/i
@@ -176,20 +176,21 @@ module Bot
                 return [(buildMessage senderId, "Hello.")]
             end  
             # Default / Give up
-            return [(buildMessage senderId, "Sorry? Is there a way I can help?")]
+            return []
         end
 
         def onMessage(message, &onProgress)
             # Query handling
             queryMsgs = []
+            key = message.from.stripped.to_s
+
             if message.body.match /Pepper/i 
                 queryMsgs = onQuery message, &onProgress
             end
-
-            key = message.from.stripped.to_s
-            if @recordings.has_key? key
+            
+            if queryMsgs == [] and @recordings.has_key? key
                 # Save the message
-                recordings[key].push message.body
+                @recordings[key].push message.body
             end
 
             return queryMsgs
