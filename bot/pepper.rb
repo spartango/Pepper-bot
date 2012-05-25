@@ -39,16 +39,51 @@ module Bot
             return [(buildMessage requester, "I've put the post up on Posterous")]
         end
 
-        def handleRecordingFinished
-            return [(buildMessage "I've started recording the conversation")]
+        def handleRecordingFinished(requester)
+            key = requester.to_s
+            if not @recordings.has_key key
+                return [(buildMessage requester, "I wasn't recording this conversation, sorry!")]
+            end
+
+            @log.debug "[Pepper]: Finishing recording messages from "+requester.node.to_s
+
+            # Pull all the messages down
+            messages = @recordings[key]
+
+            # Stop the recording
+            @recordings.delete key
+
+            # Coalesce them 
+            postBody = messages.join('\n')
+            postTitle = "Conversation "+Time.now.strftime("%-m/%-d/%Y at %H:%M")
+
+            # Make a new post
+            return handleNewPost requester, postTitle, postBody
         end
 
-        def handleRecordingStop
-            return [(buildMessage "I've stopped recording the conversation. I won't post it.")]
+        def handleRecordingStop(requester)
+            key = requester.to_s
+            if @recordings.has_key? key
+                @recordings.delete key
+
+                @log.debug "[Pepper]: Stopped recording messages from "+requester.node.to_s
+                return [(buildMessage requester, "I've stopped recording the conversation. I won't post it.")]
+            end
+
+            return [(buildMessage requester, "I wasn't recording this conversation anyway")]
+
         end
 
-        def handleNewRecording
-            return [(buildMessage "I've posted the conversation.")]
+        def handleNewRecording(requester)
+            # Add a key in the recordings for the requester
+            key = requester.to_s
+            if @recordings.has_key? key
+                return [(buildMessage requester, "I'm already recording this conversation")]
+            end
+
+            @log.debug "[Pepper]: Started recording messages from "+requester.node.to_s
+            @recordings[key] = []
+            return [(buildMessage requester, "I've started recording the conversation")]
         end
 
 
@@ -121,6 +156,8 @@ module Bot
                 return [(buildMessage message.from.stripped, "Sorry, I couldn't post that.")] # onError
 
             elsif queryText.match /finish/i
+                yield (buildMessage message.from.stripped, "Finished recording, getting your post ready...")
+
                 return handleRecordingFinished senderId
 
             elsif queryText.match /stop/i
