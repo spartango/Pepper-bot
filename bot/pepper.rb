@@ -1,27 +1,33 @@
 require 'logger'
 require 'blather/stanza/message'
-require 'posterous'
+require 'gmail'
 require 'amatch'
 
 module Bot
     class Pepper 
-        def initialize(username, password, apiKey)
-            @username = username
-            @password = password
-            @apiKey = apiKey
-
+        def initialize(username, password, posterousAddress)
+            @gmail = Gmail.connect(username, password)
+            @posterousAddress = posterousAddress
 
             @log       = Logger.new(STDOUT)
             @log.level = Logger::DEBUG
         end
 
         # Messaging
-
         def buildMessage(user, body) 
             return Blather::Stanza::Message.new user, body
         end
 
-        
+        # Posterous interface
+        def postToPosterous(postTitle, postBody)
+            @gmail.deliver do
+                to @posterousAddress
+                subject postTitle
+                body postBody
+            end
+        end
+
+        # Parsing Utils
         def popAndBuild(stopWord, stack)
             buffer = []
             while not stack.empty?

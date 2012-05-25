@@ -13,11 +13,9 @@ log.level = Logger::DEBUG
 botUsername = ''
 botPassword = ''
 
-posterousUsername = ''
-posterousPassword = ''
-posterousKey = ''
+posterousAddress = ''
 
-Pepper = Bot::Pepper.new(posterousUsername, posterousPassword, posterousKey)
+Pepper = Bot::Pepper.new(botUsername, botPassword, posterousAddress)
 
 setup botUsername, botPassword, 'talk.google.com', 5222
 
