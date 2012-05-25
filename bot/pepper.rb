@@ -27,6 +27,12 @@ module Bot
             end
         end
 
+        # Handlers
+        def handleNewPost(requester, postTitle, postBody)
+            postToPosterous(postTitle, postBody)
+            return [(buildMessage requester, "I've put the post up on Posterous")]
+        end
+
         # Parsing Utils
         def popAndBuild(stopWord, stack)
             buffer = []
@@ -40,6 +46,37 @@ module Bot
             return buffer.reverse.join(' ')
         end
 
+        # Parsers
+        def parsePost(queryText)
+            # Build stack
+            parts = queryText.split(' ')
+
+            # Consume until 'post'
+            stack = []
+
+            pushing = false
+            parts.each do |word|
+                if pushing
+                    # Push all
+                    stack.push word
+                elsif word == 'titled'
+                    pushing = true
+                end
+            end
+            # We want to handle the parts from the front
+            stack.reverse!
+
+            # Pull off the front for the title until saying
+            title = popAndBuild 'saying', stack
+
+            # Rest is body
+            body = popAndBuild '', stack
+
+            return nil if title == '' or body == ''
+
+            return {:title => title, :body => body}
+        end
+
         # Events
         def onStatus(fromNodeName)
             # Dont do anything on status
@@ -51,23 +88,31 @@ module Bot
             # Pepper Queries
             senderName = message.from.node.to_s
 
-            queryText = message.body # Strip the Pepper part out
+            queryText = message.body
             
-            # 
-                        
-            # Get all workspaces
-            if queryText.match /help/i
+            # Create a new post all at once
+            if queryText.match /new post/i
+                # ... new post titled [title] saying [body]
+                postParams = parsePost queryText
+
+                yield (buildMessage message.from.stripped, "Getting your post ready...")
+
+                return handleNewPost message.from.stripped, postParams[:title], postParams[:body] if postParams
+
+                return [(buildMessage message.from.stripped, "Sorry, I couldn't post that.")] # onError
+ 
+            elsif queryText.match /help/i
                 sender = message.from.stripped
-                return []
+                return [(buildMessage message.from.stripped, "I'm not ready to help you...")] # onError
 
             elsif queryText.match /thank/i
-                return [(buildMessage message.from.stripped, "Pepper: No problem, "+senderName)]
+                return [(buildMessage message.from.stripped, "No problem!")]
             
             elsif queryText.match /hi/i or queryText.match /hello/i or queryText.match /hey/i
-                return [(buildMessage message.from.stripped, "Pepper: Hello, "+senderName)]
+                return [(buildMessage message.from.stripped, "Hello.")]
             end  
             # Default / Give up
-            return [(buildMessage message.from.stripped, "Pepper: Sorry? Is there a way I can help?")]
+            return [(buildMessage message.from.stripped, "Sorry? Is there a way I can help?")]
         end
 
         def onMessage(message, &onProgress)
