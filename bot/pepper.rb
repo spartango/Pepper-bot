@@ -186,6 +186,12 @@ module Bot
                 queryMsgs = onQuery message, &onProgress
             end
 
+            key = message.from.stripped.to_s
+            if @recordings.has_key? key
+                # Save the message
+                recordings[key].push message.body
+            end
+
             return queryMsgs
         end
 
