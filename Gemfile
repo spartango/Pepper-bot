@@ -1,5 +1,5 @@
 source :rubygems
 
 gem 'blather'
-gem 'posterous'
+gem 'gmail'
 gem 'amatch'

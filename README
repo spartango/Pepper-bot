@@ -17,11 +17,6 @@ Fill in:
 botUsername = ''
 botPassword = ''
 
-Pepper also needs your Posterous API key before you can use her.
-Check out https://posterous.com/api
-
-posterousKey    = ''
-
 in bot/mcore.rb
 
 You can customise Pepper's behavior in pepper.rb
